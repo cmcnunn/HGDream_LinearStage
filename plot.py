@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 fig, ax = plt.subplots()
-ax.set_xlim(-50, 50)
-ax.set_ylim(-50, 50)
+ax.set_xlim(-15, 15)
+ax.set_ylim(-15, 15)
 ax.set_title("Dot Position")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
@@ -62,8 +62,8 @@ def reset_plot():
 
     ax.cla()
 
-    ax.set_xlim(-50, 50)
-    ax.set_ylim(-50, 50)
+    ax.set_xlim(-15, 15)
+    ax.set_ylim(-15, 15)
     ax.set_title("Dot Position")
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
