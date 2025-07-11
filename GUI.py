@@ -1,6 +1,7 @@
 import tkinter as tk
 from plot import update_dot
 from plot import reset_plot
+import controller
 
 #input display
 def show_move():
