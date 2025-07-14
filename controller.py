@@ -1,6 +1,6 @@
 import serial
 import time
-from GUI import ser # Importing serial port from GUI module
+from connection import ser # Importing serial port from GUI module
 
 def send_command(ser, cmd):
     """Sends a command to the Velmex VP9000 and reads the response."""
@@ -20,6 +20,7 @@ def move_to(ser, x, y):
         
         response_x = send_command(ser, cmd_x)
         response_y = send_command(ser, cmd_y)
+        time.sleep(0.05)
         send_command(ser, 'G')  # Execute queued moves
 
         print(f"Sent: {cmd_x}, Response: {response_x}")

@@ -2,8 +2,8 @@ import tkinter as tk
 from plot import update_dot,reset_plot
 from controller import move_to,move_home
 import serial
+from connection import ser
 
-ser = None # Global variable for serial port
 # Create a separate window to get serial port input
 # This window will block until the user provides input
 serwindow = tk.Tk()
