@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from controller import get_position_x, get_position_y
+from connection import ser
 
 fig, ax = plt.subplots()
 ax.set_xlim(-15, 15)
@@ -10,6 +12,8 @@ ax.set_ylabel("Y")
 ax.grid(True)
 
 dot, = ax.plot([0], [0], 'ro')
+true_dot, = ax.plot([0], [0], 'go')  # Green dot for true motor position
+
 
 # Create the rectangle box centered at (0,0) with width=4, height=4
 box_size = 4
@@ -56,6 +60,13 @@ def update_dot(x, y):
 
     prev_x, prev_y = x, y
 
+    # Get true position from controller
+    true_x = get_position_x(ser)
+    true_y = get_position_y(ser)
+    if true_x is not None and true_y is not None:
+        true_dot.set_data([true_x], [true_y])
+
+
 def reset_plot():
     global prev_x, prev_y, dot, arrows, black_dots, box
     prev_x, prev_y = 0, 0
@@ -73,7 +84,7 @@ def reset_plot():
 
     # Recreate the box centered at (0,0)
     box = patches.Rectangle((-box_size/2, -box_size/2), box_size, box_size,
-                            linewidth=1, edgecolor='green', facecolor='none')
+                            linewidth=1, edgecolor='red', facecolor='none')
     ax.add_patch(box)
 
     # Clear arrows and dots lists

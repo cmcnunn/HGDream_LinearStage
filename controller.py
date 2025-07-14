@@ -6,7 +6,7 @@ def send_command(ser, cmd):
     """Sends a command to the Velmex VP9000 and reads the response."""
     full_cmd = cmd + '\r'
     ser.write(full_cmd.encode())
-    time.sleep(0.1)
+    time.sleep(3)
     response = ser.read_all().decode(errors='ignore').strip()
     return response
 
@@ -40,6 +40,22 @@ def move_home(ser):
         print(f"Sent: HY:, Response: {response_home_y}")
     except Exception as e:
         print(f"Error during homing: {e}")
+
+def get_position_x(ser):
+    response = send_command(ser, 'PX:').strip()
+    try:
+        return float(response)
+    except ValueError:
+        print(f"[X] Failed to parse position from: {repr(response)}")
+        return None
+
+def get_position_y(ser):
+    response = send_command(ser, 'PY:').strip()
+    try:
+        return float(response)
+    except ValueError:
+        print(f"[Y] Failed to parse position from: {repr(response)}")
+        return None
 
 def main():
     try:

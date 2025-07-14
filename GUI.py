@@ -8,24 +8,26 @@ from connection import ser
 # This window will block until the user provides input
 serwindow = tk.Tk()
 serwindow.title("Serial Port Input")
-serwindow.geometry("250x100")
-serlabel = tk.Label(serwindow, text="Enter Serial Port (e.g. COM3 or /dev/ttyUSB0):")
+serwindow.geometry("400x200")
+serlabel = tk.Label(serwindow, text="Enter Serial Port & Baud number (e.g. COM3 and 9600):")
 serlabel.pack(pady=5)
-serentry = tk.Entry(serwindow, width=20)
-serentry.pack(pady=5)
+serentry = tk.Entry(serwindow, width=5)
+serentry.place(x=150, y=50)
+bauentry = tk.Entry(serwindow, width=5)
+bauentry.place(x=200, y=50)
 
 def on_submit():
     global ser
     SERIAL_PORT = serentry.get()
-    BAUD_RATE = 9600 # Default baud rate
-    if SERIAL_PORT:
+    BAUD_RATE = bauentry.get()
+    if SERIAL_PORT and BAUD_RATE:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
         serwindow.destroy()
     else:
         serlabel.config(text="Please enter a valid serial port.")
 
 submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
-submit_button.pack(pady=5)
+submit_button.place(x=170, y=80)
 serwindow.mainloop()
 
 if ser is None:
