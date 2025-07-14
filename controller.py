@@ -1,5 +1,6 @@
 import serial
 import time
+from GUI import ser # Importing serial port from GUI module
 
 def send_command(ser, cmd):
     """Sends a command to the Velmex VP9000 and reads the response."""
@@ -40,13 +41,13 @@ def move_home(ser):
         print(f"Error during homing: {e}")
 
 def main():
-    port = 'COM3'  # or '/dev/ttyUSB0' on Linux
-    baud_rate = 9600
-
-    with serial.Serial(port, baud_rate, timeout=1) as ser:
-        send_command(ser, 'Z')  # Clear errors/alarms
-        move_home(ser)
-        move_to(ser, 1000, 2000)
+    try:
+        with ser:
+            send_command(ser, 'Z')
+            move_home(ser)
+            move_to(ser, 1000, 2000)
+    except serial.SerialException as e:
+        print(f"Serial error: {e}")
 
 if __name__ == "__main__":
     main()
