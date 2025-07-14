@@ -14,8 +14,8 @@ def move_to(ser, x, y):
     try:
         x = float(x)
         y = float(y)
-        cmd_x = f'X{x:.2f}'
-        cmd_y = f'Y{y:.2f}'
+        cmd_x = f'X+{x:.2f}'
+        cmd_y = f'Y+{y:.2f}'
         
         response_x = send_command(ser, cmd_x)
         response_y = send_command(ser, cmd_y)
@@ -30,12 +30,12 @@ def move_to(ser, x, y):
 def move_home(ser):
     """Moves the stage to the home position (0, 0)."""
     try:
-        response_home_x = send_command(ser, 'HX')
+        response_home_x = send_command(ser, 'HX:')
         time.sleep(5)
-        response_home_y = send_command(ser, 'HY')
+        response_home_y = send_command(ser, 'HY:')
         time.sleep(5)
-        print(f"Sent: HX, Response: {response_home_x}")
-        print(f"Sent: HY, Response: {response_home_y}")
+        print(f"Sent: HX:, Response: {response_home_x}")
+        print(f"Sent: HY:, Response: {response_home_y}")
     except Exception as e:
         print(f"Error during homing: {e}")
 
