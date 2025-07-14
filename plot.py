@@ -4,7 +4,7 @@ import matplotlib.patches as patches
 fig, ax = plt.subplots()
 ax.set_xlim(-15, 15)
 ax.set_ylim(-15, 15)
-ax.set_title("Dot Position")
+ax.set_title("Hodoscope Position")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.grid(True)
@@ -33,7 +33,7 @@ def update_dot(x, y):
 
     # Draw arrow from old to new
     arrow = ax.arrow(prev_x, prev_y, x - prev_x, y - prev_y,
-                     head_width=3, head_length=6, fc='blue', ec='blue', length_includes_head=True)
+                     head_width=1, head_length=2, fc='blue', ec='blue', length_includes_head=True)
     arrows.append(arrow)
 
     # Remove oldest if more than 4
