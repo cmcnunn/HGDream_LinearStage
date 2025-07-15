@@ -9,30 +9,24 @@ import connection
 serwindow = tk.Tk()
 serwindow.title("Serial Port Input")
 serwindow.geometry("400x200")
-serlabel = tk.Label(serwindow, text="Enter Serial Port & Baud number (e.g. COM6 and 38400):")
+serlabel = tk.Label(serwindow, text="Enter Serial Port (e.g. COM6):")
 serlabel.pack(pady=5)
 serentry = tk.Entry(serwindow, width=5)
-serentry.place(x=150, y=50)
-bauentry = tk.Entry(serwindow, width=5)
-bauentry.place(x=200, y=50)
+serentry.place(x=180, y=50)
 
 def on_submit():
     import connection
     SERIAL_PORT = serentry.get()
-    BAUD_RATE = bauentry.get()
     try:
-        connection.ser = serial.Serial(
-        port=SERIAL_PORT,         
-        baudrate=int(BAUD_RATE),     
-        bytesize=serial.EIGHTBITS,
-        parity=serial.PARITY_EVEN,   # <-- important
-        stopbits=serial.STOPBITS_ONE,
-        timeout=1
-        )
+        connection.ser = serial.Serial(port=SERIAL_PORT,
+                                       baudrate=9600,
+                                       bytesize=serial.SEVENBITS,
+                                       parity=serial.PARITY_EVEN,
+                                       stopbits=serial.STOPBITS_TWO,
+                                       timeout=1)
         serwindow.destroy()
     except Exception as e:
         serlabel.config(text=f"Connection failed: {e}")
-
 
 submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
 submit_button.place(x=170, y=80)
@@ -83,16 +77,13 @@ x_input.place(x=80, y=50)
 y_input = tk.Entry(root, width=5)
 y_input.place(x=140, y=50)
 
-
 # Move button
 move_button = tk.Button(root, text="Move", command=on_click_move)
 move_button.place(x=100, y=100)
 
-
 # Home button 
 home_button = tk.Button(root, text="Home", command=on_click_home)
 home_button.place(x=50, y=100)
-
 
 # Reset button
 reset_button = tk.Button(root, text="Reset", command=on_click_reset)
