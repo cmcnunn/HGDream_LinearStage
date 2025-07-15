@@ -22,29 +22,21 @@ box = patches.Rectangle((-box_size/2, -box_size/2), box_size, box_size,
 ax.add_patch(box)
 
 prev_x, prev_y = 0, 0
-arrows = []
 black_dots = []
 
 plt.ion()
 plt.show()
 
 def update_dot(x, y):
-    global prev_x, prev_y, arrows, black_dots, box
+    global prev_x, prev_y, black_dots, box
 
     # Add black dot trail
     black_dot, = ax.plot(prev_x, prev_y, 'ko')
     black_dots.append(black_dot)
 
-    # Draw arrow from old to new
-    arrow = ax.arrow(prev_x, prev_y, x - prev_x, y - prev_y,
-                     head_width=1, head_length=2, fc='blue', ec='blue', length_includes_head=True)
-    arrows.append(arrow)
-
     # Remove oldest if more than 4
-    if len(arrows) > 4:
-        old_arrow = arrows.pop(0)
-        old_arrow.remove()
-    if len(black_dots) > 4:
+    
+    if len(black_dots) > 2:
         old_dot = black_dots.pop(0)
         old_dot.remove()
 
@@ -68,7 +60,7 @@ def update_dot(x, y):
 
 
 def reset_plot():
-    global prev_x, prev_y, dot, arrows, black_dots, box
+    global prev_x, prev_y, dot, black_dots, box
     prev_x, prev_y = 0, 0
 
     ax.cla()
@@ -87,12 +79,9 @@ def reset_plot():
                             linewidth=1, edgecolor='red', facecolor='none')
     ax.add_patch(box)
 
-    # Clear arrows and dots lists
-    for a in arrows:
-        a.remove()
+   
     for d in black_dots:
         d.remove()
-    arrows.clear()
     black_dots.clear()
 
     fig.canvas.draw()

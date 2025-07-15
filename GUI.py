@@ -17,14 +17,15 @@ bauentry = tk.Entry(serwindow, width=5)
 bauentry.place(x=200, y=50)
 
 def on_submit():
-    global ser
+    import connection
     SERIAL_PORT = serentry.get()
     BAUD_RATE = bauentry.get()
-    if SERIAL_PORT and BAUD_RATE:
-        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    try:
+        connection.ser = serial.Serial(SERIAL_PORT, int(BAUD_RATE), timeout=1)
         serwindow.destroy()
-    else:
-        serlabel.config(text="Please enter a valid serial port.")
+    except Exception as e:
+        serlabel.config(text=f"Connection failed: {e}")
+
 
 submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
 submit_button.place(x=170, y=80)
@@ -66,10 +67,6 @@ root.geometry("250x150")
 # Label showing output
 label = tk.Label(root, text="Welcome")
 label.place(x=20, y=25)  
-
-# Serial port input field
-ser_input = tk.Entry(root, width=5)
-ser_input.place(x=20, y=50)
 
 # X input field
 x_input = tk.Entry(root, width=5)
