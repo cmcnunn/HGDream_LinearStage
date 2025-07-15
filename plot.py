@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from controller import get_position_x, get_position_y
-from connection import ser
+import connection 
 
 fig, ax = plt.subplots()
 ax.set_xlim(-15, 15)
@@ -53,8 +53,8 @@ def update_dot(x, y):
     prev_x, prev_y = x, y
 
     # Get true position from controller
-    true_x = get_position_x(ser)
-    true_y = get_position_y(ser)
+    true_x = get_position_x(connection.ser)
+    true_y = get_position_y(connection.ser)
     if true_x is not None and true_y is not None:
         true_dot.set_data([true_x], [true_y])
 

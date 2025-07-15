@@ -2,14 +2,14 @@ import tkinter as tk
 from plot import update_dot,reset_plot
 from controller import move_to,move_home
 import serial
-from connection import ser
+import connection
 
 # Create a separate window to get serial port input
 # This window will block until the user provides input
 serwindow = tk.Tk()
 serwindow.title("Serial Port Input")
 serwindow.geometry("400x200")
-serlabel = tk.Label(serwindow, text="Enter Serial Port & Baud number (e.g. COM3 and 9600):")
+serlabel = tk.Label(serwindow, text="Enter Serial Port & Baud number (e.g. COM6 and 38400):")
 serlabel.pack(pady=5)
 serentry = tk.Entry(serwindow, width=5)
 serentry.place(x=150, y=50)
@@ -21,7 +21,14 @@ def on_submit():
     SERIAL_PORT = serentry.get()
     BAUD_RATE = bauentry.get()
     try:
-        connection.ser = serial.Serial(SERIAL_PORT, int(BAUD_RATE), timeout=1)
+        connection.ser = serial.Serial(
+        port=SERIAL_PORT,         
+        baudrate=int(BAUD_RATE),     
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_EVEN,   # <-- important
+        stopbits=serial.STOPBITS_ONE,
+        timeout=1
+        )
         serwindow.destroy()
     except Exception as e:
         serlabel.config(text=f"Connection failed: {e}")
@@ -31,7 +38,7 @@ submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
 submit_button.place(x=170, y=80)
 serwindow.mainloop()
 
-if ser is None:
+if connection.ser is None:
     print("No serial port provided. Exiting.")
     exit()
 
@@ -44,20 +51,20 @@ def show_move():
 def on_click_move():
     show_move()
     update_dot(float(x_input.get()), float(y_input.get()))
-    move_to(ser.get(), x_input.get(), y_input.get())  # Initial call to set position
+    move_to(connection.ser, x_input.get(), y_input.get())  # Initial call to set position
 
 #when home button is clicked, reset dot position
 def on_click_home():
     user_input = "(0, 0)"
     label.config(text=f"Moving to {user_input}")
     update_dot(0, 0)
-    move_home(ser.get())
+    move_home(connection.ser)
 
 def on_click_reset():
     label.config(text="Resetting plot")
     reset_plot()
     update_dot(0, 0)
-    move_home(ser.get())
+    move_home(connection.ser)
 
 #creates the GUI window    
 root = tk.Tk()

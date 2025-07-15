@@ -1,66 +1,73 @@
 import serial
 import time
-from connection import ser # Importing serial port from GUI module
+from connection import ser
 
 def send_command(ser, cmd):
-    """Sends a command to the Velmex VP9000 and reads the response."""
-    full_cmd = cmd + '\r'
+    """Send a command to VP9000 and read the response."""
+    full_cmd = cmd + '\r\n'  # Controller expects CR+LF
     ser.write(full_cmd.encode())
-    time.sleep(3)
+    time.sleep(0.5)  # Wait for controller to respond
     response = ser.read_all().decode(errors='ignore').strip()
     return response
 
-def move_to(ser, x, y):
-    """Moves the stage to the specified (x, y) coordinates."""
+def move_to(ser, x_steps, y_steps):
+    """Move stage to absolute position given in steps."""
     try:
-        x = float(x)
-        y = float(y)
-        cmd_x = f'X+{x:.2f}'
-        cmd_y = f'Y+{y:.2f}'
-        
-        response_x = send_command(ser, cmd_x)
-        response_y = send_command(ser, cmd_y)
-        time.sleep(0.05)
-        send_command(ser, 'G')  # Execute queued moves
+        x_steps = int(x_steps)
+        y_steps = int(y_steps)
 
-        print(f"Sent: {cmd_x}, Response: {response_x}")
-        print(f"Sent: {cmd_y}, Response: {response_y}")
+        cmd_x = f'IA1M{x_steps}'  # Absolute move motor 1 (X)
+        cmd_y = f'IA2M{y_steps}'  # Absolute move motor 2 (Y)
+
+        resp_x = send_command(ser, cmd_x)
+        resp_y = send_command(ser, cmd_y)
+
+        # Optionally wait a bit after commands
+        time.sleep(0.1)
+
+        print(f"Sent: {cmd_x}, Response: {resp_x}")
+        print(f"Sent: {cmd_y}, Response: {resp_y}")
 
     except ValueError:
-        print("Invalid coordinates. Please enter numeric values.")
+        print("Invalid steps, must be integers.")
 
 def move_home(ser):
-    """Moves the stage to the home position (0, 0)."""
-    try:
-        response_home_x = send_command(ser, 'HX:')
-        time.sleep(5)
-        response_home_y = send_command(ser, 'HY:')
-        time.sleep(5)
-        print(f"Sent: HX:, Response: {response_home_x}")
-        print(f"Sent: HY:, Response: {response_home_y}")
-    except Exception as e:
-        print(f"Error during homing: {e}")
+    """Home motors 1 and 2 by indexing to negative limit."""
+    resp_x = send_command(ser, 'I1M-0')  # Home motor 1
+    resp_y = send_command(ser, 'I2M-0')  # Home motor 2
+
+    print(f"Sent: I1M-0, Response: {resp_x}")
+    print(f"Sent: I2M-0, Response: {resp_y}")
+
+    # Wait enough time for homing to finish
+    time.sleep(5)
+
+    # Zero the motor positions after homing
+    zero_x = send_command(ser, 'IA1M0')  # Zero motor 1
+    zero_y = send_command(ser, 'IA1M0')  # Zero motor 2
+    print(f"Zeroed motor 1: {zero_x}")
+    print(f"Zeroed motor 2: {zero_y}")
 
 def get_position_x(ser):
-    response = send_command(ser, 'PX:').strip()
+    resp = send_command(ser, 'X')
     try:
-        return float(response)
+        return int(resp)
     except ValueError:
-        print(f"[X] Failed to parse position from: {repr(response)}")
+        print(f"Failed to parse X position: {repr(resp)}")
         return None
 
 def get_position_y(ser):
-    response = send_command(ser, 'PY:').strip()
+    resp = send_command(ser, 'Y')
     try:
-        return float(response)
+        return int(resp)
     except ValueError:
-        print(f"[Y] Failed to parse position from: {repr(response)}")
+        print(f"Failed to parse Y position: {repr(resp)}")
         return None
 
 def main():
     try:
         with ser:
-            send_command(ser, 'Z')
+            send_command(ser, 'Z')  # Zero stage (optional, depends on your setup)
             move_home(ser)
             move_to(ser, 1000, 2000)
     except serial.SerialException as e:
