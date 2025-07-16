@@ -72,5 +72,5 @@ and when prompted for port name type 'dummy'.
 
 Both controller files will print the sent command which you can compare with the VXM or VP9000 user manuals 
 
-- [Velmex VXM User Manual (PDF)](docs/vxm_user_manual.pdf)
-- [Velmex VP9000 User Manual (PDF)](doc/vp9000_user_manual.pdf)
+- [Velmex VXM User Manual (PDF)](docs/vxm_user_manl.pdf)
+- [Velmex VP9000 User Manual (PDF)](doc/vp9002_usrman.pdf)
