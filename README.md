@@ -1,6 +1,6 @@
 # HGDream_LinearStage
 
-A Python-based control interface for a 2-axis Velmex linear stage system. This project includes both a serial controller and a live-updating GUI for manually moving and monitoring stage position.
+A Python-based control interface for a 2-axis Velmex linear stage system which holds the HGDream Hodoscope and MCP-Timing devices. This project includes both a serial controller and a live-updating GUI for manually moving and monitoring stage position.
 
 ## Features
 

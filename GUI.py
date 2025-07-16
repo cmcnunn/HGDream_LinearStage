@@ -104,10 +104,14 @@ label = tk.Label(root, text="Welcome")
 label.place(x=20, y=25)  
 
 # X input field
+x_label = tk.Label(root, text="X:")
+x_label.place(x=60, y=50)
 x_input = tk.Entry(root, width=5)
 x_input.place(x=80, y=50)
 
 # Y input field
+y_label = tk.Label(root, text="Y:")
+y_label.place(x=120, y=50)
 y_input = tk.Entry(root, width=5)
 y_input.place(x=140, y=50)
 
