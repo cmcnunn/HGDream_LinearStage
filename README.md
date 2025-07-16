@@ -39,8 +39,7 @@ Visualize motion using a live plot
 
 Reset the plot and position trace
 
-Run the Controller Script
-If you'd prefer command-line testing or scripting, run:
+Import the Controller Script into the GUI Script
 
 ```bash
 python controller_VXM.py
@@ -62,13 +61,15 @@ Move the stage to an absolute position
 
 Move the stage to a relative position
 
-If you want to run the GUI without any connection to a motor run: 
+If you want to run the GUI without any connection to a motor import: 
 
 ``` bash
 python controller_dummy.py
 ```
 
 and when prompted for port name type 'dummy'.
+
+This will disable the valid port connection requirment. 
 
 Both controller files will print the sent command which you can compare with the VXM or VP9000 user manuals 
 
