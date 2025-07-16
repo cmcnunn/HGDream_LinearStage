@@ -8,7 +8,7 @@ A Python-based control interface for a 2-axis Velmex linear stage system. This p
 - Homing and absolute coordinate movement
 - Live Matplotlib visualization of stage movement and position
 - GUI for interactive control
-- Real-time position tracking with support for trails and arrows
+- Position tracking
 
 ## Requirements
 
@@ -20,3 +20,5 @@ A Python-based control interface for a 2-axis Velmex linear stage system. This p
 Install dependencies:
 ```bash
 pip install -r requirements.txt
+
+
