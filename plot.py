@@ -3,24 +3,21 @@ import matplotlib.patches as patches
 import connection 
 
 fig, ax = plt.subplots()
-ax.set_xlim(-15, 15)
-ax.set_ylim(-15, 15)
+ax.set_xlim(0, 20)
+ax.set_ylim(0, 20)
 ax.set_title("Hodoscope Position")
-ax.set_xlabel("X")
-ax.set_ylabel("Y")
+ax.set_xlabel("X [cm]")
+ax.set_ylabel("Y [cm]")
 ax.grid(True)
 
-dot, = ax.plot([0], [0], 'ro')
-true_dot, = ax.plot([0], [0], 'go')  # Green dot for true motor position
-
-
-# Create the rectangle box centered at (0,0) with width=4, height=4
+dot, = ax.plot([3], [0], 'ro') # Red dot for current position
+prev_x, prev_y = 3, 0
+# Create the rectangle box centered at (3,0) with width=4, height=4
 box_size = 4
-box = patches.Rectangle((-box_size/2, -box_size/2), box_size, box_size,
-                        linewidth=1, edgecolor='green', facecolor='none')
+box = patches.Rectangle((prev_x - box_size/2, prev_y - box_size/2), box_size, box_size,
+                        linewidth=1, edgecolor='red', facecolor='none')
 ax.add_patch(box)
-
-prev_x, prev_y = 0, 0
+dot.set_data([prev_x], [prev_y])
 black_dots = []
 
 plt.ion()
