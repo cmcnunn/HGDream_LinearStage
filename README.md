@@ -20,5 +20,57 @@ A Python-based control interface for a 2-axis Velmex linear stage system. This p
 Install dependencies:
 ```bash
 pip install -r requirements.txt
+```
 
+## Usage
 
+### Launch the GUI
+
+```bash
+python GUI.py 
+```
+When you run the GUI, you'll be prompted to enter your serial port (e.g., COM3). The interface allows you to:
+
+Home the linear stage
+
+Enter X/Y coordinates to move the stage
+
+Visualize motion using a live plot
+
+Reset the plot and position trace
+
+Run the Controller Script
+If you'd prefer command-line testing or scripting, run:
+
+```bash
+python controller_VXM.py
+```
+
+or
+
+```bash
+python controller_VP9000.py
+```
+
+This will:
+
+Initialize the VXM or VP9000 controller
+
+Home both motors
+
+Move the stage to an absolute position 
+
+Move the stage to a relative position
+
+If you want to run the GUI without any connection to a motor run: 
+
+``` bash
+python controller_dummy.py
+```
+
+and when prompted for port name type 'dummy'.
+
+Both controller files will print the sent command which you can compare with the VXM or VP9000 user manuals 
+
+- [Velmex VXM User Manual (PDF)](docs/vxm_user_manual.pdf)
+- [Velmex VP9000 User Manual (PDF)](doc/vp9000_user_manual.pdf)
