@@ -1,6 +1,6 @@
 import tkinter as tk
-from plot import update_dot,reset_plot
-from controller import move_to,move_home
+from plot import update_dot,reset_plot,prev_x,prev_y
+from controller import move_to,move_home,rel_move_to
 import serial
 import connection
 
@@ -15,6 +15,7 @@ serentry = tk.Entry(serwindow, width=5)
 serentry.place(x=180, y=50)
 
 def on_submit():
+    '''Submit the serial port and close the window'''
     import connection
     SERIAL_PORT = serentry.get()
     try:
@@ -36,29 +37,53 @@ if connection.ser is None:
     print("No serial port provided. Exiting.")
     exit()
 
-#input display
 def show_move():
+    '''Show the move command'''
+    check_input()
     user_input = f"({x_input.get()}, {y_input.get()})"
     label.config(text=f"Moving to {user_input}")
 
-#when click display input 
 def on_click_move():
-    show_move()
-    update_dot(float(x_input.get()), float(y_input.get()))
-    move_to(connection.ser, x_input.get(), y_input.get())  # Initial call to set position
+    '''Move to specified position'''
+    x, y = check_input()
+    label.config(text=f"Moving to ({x}, {y})")
+    update_dot(x, y)
+    move_to(connection.ser, x, y)
 
-#when home button is clicked, reset dot position
+def on_click_relmove():
+    '''Move relative to current position'''
+    x_rel, y_rel = check_input()
+    label.config(text=f"Moving by ({x_rel}, {y_rel})")
+    new_x = prev_x + x_rel
+    new_y = prev_y + y_rel
+    update_dot(new_x, new_y)
+    rel_move_to(connection.ser, new_x, new_y)
+
 def on_click_home():
+    '''Home the stage and move to (0,0)'''
     user_input = "(0, 0)"
     label.config(text=f"Moving to {user_input}")
-    update_dot(0, 0)
+    reset_plot()
+    update_dot(0, 0)    
     move_home(connection.ser)
 
-def on_click_reset():
-    label.config(text="Resetting plot")
-    reset_plot()
-    update_dot(0, 0)
-    move_home(connection.ser)
+def check_input():
+    """Validate and return x and y input as integers."""
+    try:
+        x = int(x_input.get())
+    except ValueError:
+        x = 0
+        x_input.delete(0, tk.END)
+        x_input.insert(0, "0")
+
+    try:
+        y = int(y_input.get())
+    except ValueError:
+        y = 0
+        y_input.delete(0, tk.END)
+        y_input.insert(0, "0")
+
+    return x, y
 
 #creates the GUI window    
 root = tk.Tk()
@@ -85,9 +110,8 @@ move_button.place(x=100, y=100)
 home_button = tk.Button(root, text="Home", command=on_click_home)
 home_button.place(x=50, y=100)
 
-# Reset button
-reset_button = tk.Button(root, text="Reset", command=on_click_reset)
-reset_button.place(x=150, y=100)
-
+# Relative motion 
+rel_motion = tk.Button(root, text="Relative Motion", command=on_click_relmove)
+rel_motion.place(x=150, y=100)
 # Start the GUI event loop
 root.mainloop()

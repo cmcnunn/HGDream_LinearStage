@@ -2,32 +2,36 @@ import serial
 import time
 from connection import ser
 
-def send_command(ser, cmd):
-    """Send a command to VP9000 and return its response."""
+def send_command(ser, cmd, wait_for_ready=True):
     try:
-        # Always enable online mode before sending anything
+        # Ensure we're in Online Mode
         ser.write(b'F')
         time.sleep(0.05)
 
-        # Send main command
+        # Send command
         full_cmd = cmd + '\r'
         ser.write(full_cmd.encode())
-        time.sleep(0.05)
 
-        # Send 'R' if this is a motion command (Index, Absolute, etc.)
-        if cmd.startswith(('I', 'S', 'A')):  # move, speed, accel
+        # If it's a motion command, send 'R'
+        if cmd.startswith(('I', 'S', 'A')):
+            time.sleep(0.05)
             ser.write(b'R\r')
-            time.sleep(1)  # Allow time for motion
-        else:
-            time.sleep(0.1)
 
-        # Read whatever is in the buffer
-        response = ser.read_all().decode(errors='ignore').strip()
-        return response
+        # Now wait for ready signal '^'
+        if wait_for_ready:
+            response = b""
+            timeout = time.time() + 5  # wait up to 5 seconds
+            while b'^' not in response and time.time() < timeout:
+                response += ser.read(1)
+
+            return response.decode(errors='ignore').strip()
+        else:
+            return ser.read_all().decode(errors='ignore').strip()
 
     except serial.SerialException as e:
         print(f"Serial error: {e}")
         return None
+
 
 def move_to(ser, x_steps, y_steps):
     """Move stage to absolute position given in steps."""
@@ -43,6 +47,27 @@ def move_to(ser, x_steps, y_steps):
 
         # Optionally wait a bit after commands
         time.sleep(0.1)
+
+        print(f"Sent: {cmd_x}, Response: {resp_x}")
+        print(f"Sent: {cmd_y}, Response: {resp_y}")
+
+    except ValueError:
+        print("Invalid steps, must be integers.")
+
+def rel_move_to(ser, x_steps, y_steps):
+    """Move stage relative to current position by given steps."""
+    try:
+        x_steps = int(x_steps)
+        y_steps = int(y_steps)
+
+        cmd_x = f'I1M{x_steps}'  # Relative move motor 1 (X)
+        cmd_y = f'I2M{y_steps}'  # Relative move motor 2 (Y)
+
+        resp_x = send_command(ser, cmd_x)
+        resp_y = send_command(ser, cmd_y)
+
+        # Optionally wait a bit after commands
+        time.sleep(1)
 
         print(f"Sent: {cmd_x}, Response: {resp_x}")
         print(f"Sent: {cmd_y}, Response: {resp_y}")
@@ -68,6 +93,7 @@ def move_home(ser):
     print(f"Zeroed motor 2: {zero_y}")
 
 def get_position_x(ser):
+    '''Get current X position in steps.'''
     resp = send_command(ser, 'X')
     try:
         return int(resp)
@@ -76,6 +102,7 @@ def get_position_x(ser):
         return None
 
 def get_position_y(ser):
+    '''Get current Y position in steps.'''
     resp = send_command(ser, 'Y')
     try:
         return int(resp)
@@ -84,6 +111,7 @@ def get_position_y(ser):
         return None
 
 def main():
+    
     try:
         with ser:
             send_command(ser, 'Z')  # Zero stage (optional, depends on your setup)

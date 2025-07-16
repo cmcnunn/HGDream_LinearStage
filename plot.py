@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from controller import get_position_x, get_position_y
 import connection 
 
 fig, ax = plt.subplots()
@@ -51,12 +50,6 @@ def update_dot(x, y):
     plt.pause(0.01)
 
     prev_x, prev_y = x, y
-
-    # Get true position from controller
-    true_x = get_position_x(connection.ser)
-    true_y = get_position_y(connection.ser)
-    if true_x is not None and true_y is not None:
-        true_dot.set_data([true_x], [true_y])
 
 
 def reset_plot():
