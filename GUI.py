@@ -1,5 +1,5 @@
 import tkinter as tk
-from plot import update_dot,reset_plot,prev_x,prev_y
+from plot import update_dot,reset_plot, update_dot_rel,prev_x,prev_y
 from controller_dummy import move_to,move_home,rel_move_to
 import serial
 import connection
@@ -65,17 +65,15 @@ def on_click_relmove():
     '''Move relative to current position'''
     x_rel, y_rel = check_input()
     label.config(text=f"Moving by ({x_rel}, {y_rel})")
-    new_x = prev_x + x_rel
-    new_y = prev_y + y_rel
-    update_dot(new_x, new_y)
-    rel_move_to(connection.ser, new_x, new_y)
+    update_dot_rel(x_rel, y_rel)
+    rel_move_to(connection.ser, x_rel, y_rel)
 
 def on_click_home():
     '''Home the stage and move to (0,0)'''
-    user_input = "(0, 0)"
+    user_input = "(3, 0)"
     label.config(text=f"Moving to {user_input}")
     reset_plot()
-    update_dot(0, 0)    
+    update_dot(3, 0)    
     move_home(connection.ser)
 
 def check_input():
