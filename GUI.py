@@ -1,6 +1,6 @@
 import tkinter as tk
 from plot import update_dot,reset_plot,prev_x,prev_y
-from controller import move_to,move_home,rel_move_to
+from controller_VP900 import move_to,move_home,rel_move_to
 import serial
 import connection
 
