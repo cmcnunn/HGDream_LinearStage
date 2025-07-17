@@ -31,8 +31,8 @@ def send_command(ser, cmd):
 def zero_to(ser):
     """Zero the stage position."""
     try:
-        resp_x = send_command(ser, 'IA1M13016', wait_for_ready=False, clear_first=True)  # Zero motor 1
-        resp_y = send_command(ser, 'IA2M13016', wait_for_ready=False, clear_first=True)  # Zero motor 2
+        resp_x = send_command(ser, 'IA1M13016')  # Zero motor 1
+        resp_y = send_command(ser, 'IA2M13016')  # Zero motor 2
         print(f"Zeroed motor 1: {resp_x}")
         print(f"Zeroed motor 2: {resp_y}")
 
