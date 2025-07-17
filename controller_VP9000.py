@@ -5,8 +5,8 @@ from connection import ser
 def zero_to(ser):
     """Zero the stage position."""
     try:
-        resp_x = send_command(ser, 'IA1M13016', wait_for_ready=False, clear_first=True)  # Zero motor 1
-        resp_y = send_command(ser, 'IA2M13016', wait_for_ready=False, clear_first=True)  # Zero motor 2
+        resp_x = send_command(ser, 'IA1M13016', clear_first=True)  # Zero motor 1
+        resp_y = send_command(ser, 'IA2M13016', clear_first=True)  # Zero motor 2
 
         ser.write(b'R\r') #Run
         time.sleep(1)
