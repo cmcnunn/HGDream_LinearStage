@@ -9,3 +9,7 @@ def move_home(ser):
 def rel_move_to(ser, dx, dy):
     print(f"Moving relatively by dX: {dx}, dY: {dy}")
     return
+
+def zero_to(ser):
+    print("Zeroing stage position")
+    return

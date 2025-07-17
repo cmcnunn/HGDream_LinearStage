@@ -28,17 +28,32 @@ def send_command(ser, cmd):
         print(f"Serial error: {e}")
         return None
     
-def convert_cm_to_steps(cm, steps_per_cm=50):
-    """Convert centimeters to motor steps."""
-    return int(cm * steps_per_cm)
+def zero_to(ser):
+    """Zero the stage position."""
+    try:
+        resp_x = send_command(ser, 'IA1M13016', wait_for_ready=False, clear_first=True)  # Zero motor 1
+        resp_y = send_command(ser, 'IA2M13016', wait_for_ready=False, clear_first=True)  # Zero motor 2
+        print(f"Zeroed motor 1: {resp_x}")
+        print(f"Zeroed motor 2: {resp_y}")
 
-def move_to(ser, x_cm, y_cm):
+        ser.write(b'R') #Run
+        time.sleep(1)
+        
+    except serial.SerialException as e:
+        print(f"Serial error during zeroing: {e}")
+
+    
+def convert_mm_to_steps(mm, steps_per_mm=400):
+    """Convert centimeters to motor steps."""
+    return int(mm * steps_per_mm) + 13016  # Offset for zeroing
+
+def move_to(ser, x_mm, y_mm):
     """Move stage to absolute position given in centimeters."""
     try:
-        x_steps = convert_cm_to_steps(int(x_cm))
-        y_steps = convert_cm_to_steps(int(y_cm))
+        x_steps = convert_mm_to_steps(int(x_mm))
+        y_steps = convert_mm_to_steps(int(y_mm))
         cmd_x = f'IA1M{x_steps}'  # Absolute move motor 1 (X)
-        cmd_y = f'IA3M{y_steps}'  # Absolute move motor 2 (Y)
+        cmd_y = f'IA2M{y_steps}'  # Absolute move motor 2 (Y)
         resp_x = send_command(ser, cmd_x)
         time.sleep(1)  # Small delay between commands
         resp_y = send_command(ser, cmd_y)
@@ -48,13 +63,13 @@ def move_to(ser, x_cm, y_cm):
         print(f"Error in move_to: {e}")
         return None, None
 
-def rel_move_to(ser, x_cm, y_cm):
+def rel_move_to(ser, x_mm, y_mm):
     """Move stage relative to current position given in centimeters."""
     try:
-        x_steps = convert_cm_to_steps(int(x_cm))
-        y_steps = convert_cm_to_steps(int(y_cm))
+        x_steps = convert_mm_to_steps(int(x_mm)) - 13016
+        y_steps = convert_mm_to_steps(int(y_mm)) - 13016
         cmd_x = f'I1M{x_steps}'  # Relative move motor 1 (X)
-        cmd_y = f'I3M{y_steps}'  # Relative move motor 2 (Y)
+        cmd_y = f'I2M{y_steps}'  # Relative move motor 2 (Y)
         resp_x = send_command(ser, cmd_x)
         time.sleep(1)  # Small delay between commands
         resp_y = send_command(ser, cmd_y)
@@ -67,9 +82,9 @@ def rel_move_to(ser, x_cm, y_cm):
 def move_home(ser):
     """Home the stage."""
     try:
-        resp_x = send_command(ser, 'I1M-0')  # Home motor 1 (X)
+        resp_x = send_command(ser, 'IA1M13016')  # Home motor 1 (X)
         time.sleep(1)  # Small delay between commands
-        resp_y = send_command(ser, 'I2M-0')  # Home motor 2 (Y)
+        resp_y = send_command(ser, 'IA2M013016')  # Home motor 2 (Y)
         time.sleep(0.5)  # Optional wait after commands
         return resp_x, resp_y
     except Exception as e:

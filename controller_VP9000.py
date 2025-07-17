@@ -2,6 +2,24 @@ import serial
 import time
 from connection import ser
 
+def zero_to(ser):
+    """Zero the stage position."""
+    try:
+        resp_x = send_command(ser, 'IA1M13016', wait_for_ready=False, clear_first=True)  # Zero motor 1
+        resp_y = send_command(ser, 'IA2M13016', wait_for_ready=False, clear_first=True)  # Zero motor 2
+
+        ser.write(b'R\r') #Run
+        time.sleep(1)
+        
+        print(f"Zeroed motor 1: {resp_x}")
+        print(f"Zeroed motor 2: {resp_y}")
+
+        ser.write(b'R\r') #Run
+        time.sleep(1)
+
+    except serial.SerialException as e:
+        print(f"Serial error during zeroing: {e}")
+
 def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
     try:
         # Online mode
@@ -39,18 +57,18 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
         print(f"Serial error: {e}")
         return None
 
-def convert_cm_to_steps(cm, steps_per_cm=50):
+def convert_mm_to_steps(mm, steps_per_mm=400):
     """Convert millimeters to motor steps."""
-    return int(cm * steps_per_cm)
+    return int(mm * steps_per_mm + 13016) # Offset for zeroing)
 
-def move_to(ser, x_steps, y_steps):
+def move_to(ser, x_mm, y_mm):
     """Move stage to absolute position given in steps."""
     try:
-        x_steps = convert_cm_to_steps(int(x_steps))
-        y_steps = convert_cm_to_steps(int(y_steps))
+        x_steps = convert_mm_to_steps(int(x_mm))
+        y_steps = convert_mm_to_steps(int(y_mm))
 
         cmd_x = f'IA1M{x_steps}'  # Absolute move motor 1 (X)
-        cmd_y = f'IA3M{y_steps}'  # Absolute move motor 2 (Y)
+        cmd_y = f'IA2M{y_steps}'  # Absolute move motor 2 (Y)
 
         resp_x = send_command(ser, cmd_x)
         resp_y = send_command(ser, cmd_y)
@@ -64,14 +82,14 @@ def move_to(ser, x_steps, y_steps):
     except ValueError:
         print("Invalid steps, must be integers.")
 
-def rel_move_to(ser, x_cm, y_cm):
+def rel_move_to(ser, x_mm, y_mm):
     """Move stage relative to current position by given steps."""
     try:
-        x_steps = convert_cm_to_steps(int(x_cm))
-        y_steps = convert_cm_to_steps(int(y_cm))
+        x_steps = convert_mm_to_steps(int(x_mm)) - 13016
+        y_steps = convert_mm_to_steps(int(y_mm)) - 13016
 
         cmd_x = f'I1M{x_steps}'  # Relative move motor 1 (X)
-        cmd_y = f'I3M{y_steps}'  # Relative move motor 2 (Y)
+        cmd_y = f'I2M{y_steps}'  # Relative move motor 2 (Y)
 
         resp_x = send_command(ser, cmd_x)
         resp_y = send_command(ser, cmd_y)
@@ -86,39 +104,16 @@ def rel_move_to(ser, x_cm, y_cm):
         print("Invalid steps, must be integers.")
 
 def move_home(ser):
-    """Home motors 1 and 2 by indexing to negative limit."""
-    resp_x = send_command(ser, 'I1M-0')  # Home motor 1
-    resp_y = send_command(ser, 'I3M-0')  # Home motor 2
+    """Home motors 1 and 2 by indexing to position 0."""
+    resp_x = send_command(ser, 'IA1M13016')  # Home motor 1
+    resp_y = send_command(ser, 'IA2M13016')  # Home motor 2
 
-    print(f"Sent: I1M-0, Response: {resp_x}")
-    print(f"Sent: I3M-0, Response: {resp_y}")
+    print(f"Sent: IA1M13016, Response: {resp_x}")
+    print(f"Sent: IA2M13016, Response: {resp_y}")
 
     # Wait enough time for homing to finish
     time.sleep(5)
 
-    # Zero the motor positions after homing
-    zero_x = send_command(ser, 'IA1M0')  # Zero motor 1
-    zero_y = send_command(ser, 'IA3M0')  # Zero motor 2
-    print(f"Zeroed motor 1: {zero_x}")
-    print(f"Zeroed motor 2: {zero_y}")
-
-def get_position_x(ser):
-    '''Get current X position in steps.'''
-    resp = send_command(ser, 'X')
-    try:
-        return int(resp)
-    except ValueError:
-        print(f"Failed to parse X position: {repr(resp)}")
-        return None
-
-def get_position_y(ser):
-    '''Get current Y position in steps.'''
-    resp = send_command(ser, 'Y')
-    try:
-        return int(resp)
-    except ValueError:
-        print(f"Failed to parse Y position: {repr(resp)}")
-        return None
 
 def main():
     

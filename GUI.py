@@ -1,6 +1,6 @@
 import tkinter as tk
-from plot import update_dot,reset_plot, update_dot_rel,prev_x,prev_y
-from controller_dummy import move_to,move_home,rel_move_to
+from plot import update_dot,reset_plot, update_dot_rel
+from controller_dummy import move_to,move_home,rel_move_to, zero_to
 import serial
 import connection
 
@@ -21,6 +21,7 @@ def on_submit():
 
     if SERIAL_PORT.lower() == 'dummy':
         connection.ser = 'Dummy'
+        zero_to(connection.ser)
         serwindow.destroy()
     else:
         try:
@@ -32,6 +33,7 @@ def on_submit():
                 stopbits=serial.STOPBITS_TWO,
                 timeout=1
             )
+            zero_to(connection.ser)
             serwindow.destroy()
         except Exception as e:
             serlabel.config(text=f"Connection failed: {e}")
@@ -70,10 +72,10 @@ def on_click_relmove():
 
 def on_click_home():
     '''Home the stage and move to (0,0)'''
-    user_input = "(3, 0)"
+    user_input = "(0, 0)"
     label.config(text=f"Moving to {user_input}")
     reset_plot()
-    update_dot(3, 0)    
+    update_dot(0, 0)    
     move_home(connection.ser)
 
 def check_input():
