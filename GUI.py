@@ -77,7 +77,6 @@ def on_click_home():
     '''Home the stage and move to (0,0)'''
     user_input = "(0, 0)"
     label.config(text=f"Moving to {user_input}")
-    reset_plot()
     update_dot(0, 0)    
     move_home(connection.ser)
 
@@ -90,7 +89,6 @@ def on_click_findrange():
 def on_click_zero():
     '''Zero the stage'''
     zero_to(connection.ser)
-    reset_plot()
     update_dot(0, 0)
 
 def check_input():
