@@ -33,6 +33,7 @@ def on_submit():
                 stopbits=serial.STOPBITS_TWO,
                 timeout=1
             )
+            
             zero_to(connection.ser)
             xmin, xmax, ymin, ymax =find_range(connection.ser)
             set_plot_limits(xmin, xmax, ymin, ymax)

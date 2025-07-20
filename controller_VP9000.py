@@ -88,7 +88,7 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
 
             if time.time() >= timeout:
                 print("Timeout waiting for motor response, assuming motor is stuck.")
-                motor_stuck()
+                motor_stuck(ser)
 
             if b'^' not in response:
                 raise TimeoutError("Did not receive the expected '^' character within timeout.")
@@ -180,7 +180,7 @@ def move_home(ser):
     # Wait enough time for homing to finish
     time.sleep(5)
 
-def motor_stuck():
+def motor_stuck(ser):
     '''Motor is stuck: Stop all motion and clear queue'''
     ser.write(b'XQ\r')  # Kill any current motion
     time.sleep(0.05)
@@ -242,6 +242,11 @@ def get_position_y(ser):
     except ValueError:
         print(f"Failed to parse Y position: {repr(response)}")
         return None
+    
+def get_mid_position(xres_min, xres_max, yres_min, yres_max):
+    x_mid = (xres_min + xres_max) / 2
+    y_mid = (yres_min + yres_max) / 2
+    return x_mid, y_mid
 
 def main():
     
