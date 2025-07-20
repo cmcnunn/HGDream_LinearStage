@@ -5,6 +5,8 @@ from connection import ser
 def zero_to(ser):
     """Zero the stage position."""
     try:
+        print("Zeroing stage...")
+
         resp_x = send_command(ser, 'I1M-0', clear_first=True)  # Zero motor 1
         resp_y = send_command(ser, 'I2M0', clear_first=True)  # Zero motor 2
 
@@ -21,8 +23,6 @@ def zero_to(ser):
         ser.write(b'F\r') #Turn motor online
         print("Turned motors online")
         time.sleep(1)
-
-        print('Sent Limit commands to motors for zeroing')
 
         resp_x = send_command(ser, 'IA1M13016')  # Set motor 1 to center position
         resp_y = send_command(ser, 'IA2M-13016')  # Set motor 2 to center position
@@ -50,7 +50,7 @@ def zero_to(ser):
         ser.write(b'C\r') #Clear queued commands
         time.sleep(1)
 
-        print("ZEROING COMPLETE...Stage should be at (0,0)...Opening GUI now")
+        print("ZEROING COMPLETE...Stage should be at (0,0)")
 
     except serial.SerialException as e:
         print(f"Serial error during zeroing: {e}")
@@ -104,7 +104,20 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
 
 def convert_mm_to_steps(mm, steps_per_mm=400):
     """Convert millimeters to motor steps."""
-    return int(mm * steps_per_mm)
+    try:
+        int(mm * steps_per_mm)
+        return int(mm * steps_per_mm)
+    except ValueError:
+        print("Invalid input for convert_mm_to_steps: mm must be a number.")
+        return None
+
+def convert_steps_to_mm(steps, steps_per_mm=400):
+    """Convert motor steps to millimeters."""
+    try:
+        return steps / steps_per_mm
+    except ValueError:
+        print("Invalid input for convert_steps_to_mm: steps must be a number.")
+        return None
 
 def move_to(ser, x_mm, y_mm):
     """Move stage to absolute position given in steps."""
@@ -113,7 +126,11 @@ def move_to(ser, x_mm, y_mm):
         y_steps = convert_mm_to_steps(int(y_mm))
 
         cmd_x = f'IA1M{x_steps}'  # Absolute move motor 1 (X)
-        cmd_y = f'IA2M{y_steps}'  # Absolute move motor 2 (Y)
+
+        if y_steps >= 0: #flip y direction because motor is inverted
+            cmd_y = f'IA2M-{y_steps}'
+        else:
+            cmd_y = f'IA2M{abs(y_steps)}'
 
         resp_x = send_command(ser, cmd_x)
         resp_y = send_command(ser, cmd_y)
@@ -134,7 +151,11 @@ def rel_move_to(ser, x_mm, y_mm):
         y_steps = convert_mm_to_steps(int(y_mm))
 
         cmd_x = f'I1M{x_steps}'  # Relative move motor 1 (X)
-        cmd_y = f'I2M{y_steps}'  # Relative move motor 2 (Y)
+        if y_steps >= 0: #flip y direction because motor is inverted
+            cmd_y = f'IA2M-{y_steps}'
+        else:
+            cmd_y = f'IA2M{abs(y_steps)}'
+
 
         resp_x = send_command(ser, cmd_x)
         resp_y = send_command(ser, cmd_y)
@@ -170,6 +191,57 @@ def motor_stuck():
     ser.write(b'IA1M-0\r') # Move stage to negative limit
     time.sleep(1)
     zero_to(ser)
+
+def find_range(ser):
+    print("Finding range...")
+
+    ser.write(b'XQ\r')  # Kill any current motion
+    time.sleep(0.5)
+    send_command(ser, 'C')   # clear queue
+
+    send_command(ser, 'I1M-0', clear_first=True)  # home X
+    time.sleep(5)
+    xres_min = convert_steps_to_mm(get_position_x(ser))
+
+    send_command(ser, 'I1M0', clear_first=True)   # move to positive X
+    time.sleep(5)
+    xres_max = convert_steps_to_mm(get_position_x(ser))
+
+    send_command(ser, 'I2M-0', clear_first=True)  # home Y
+    time.sleep(5)
+    yres_min = convert_steps_to_mm(get_position_y(ser))
+
+    send_command(ser, 'I2M0', clear_first=True)   # move to positive Y
+    time.sleep(5)
+    yres_max = convert_steps_to_mm(get_position_y(ser))
+
+    print(f"xres_min: {xres_min}, xres_max: {xres_max}")
+    print(f"yres_min: {yres_min}, yres_max: {yres_max}")
+
+    move_home(ser)  # Return to home position
+
+    return xres_min, xres_max, yres_min, yres_max
+
+
+def get_position_x(ser):
+    ser.write(b'X\r')
+    time.sleep(0.05)
+    response = ser.read_until(b'\r').decode().strip()
+    try:
+        return int(response)
+    except ValueError:
+        print(f"Failed to parse X position: {repr(response)}")
+        return None
+
+def get_position_y(ser):
+    ser.write(b'Y\r')
+    time.sleep(0.05)
+    response = ser.read_until(b'\r').decode().strip()
+    try:
+        return int(response)
+    except ValueError:
+        print(f"Failed to parse Y position: {repr(response)}")
+        return None
 
 def main():
     

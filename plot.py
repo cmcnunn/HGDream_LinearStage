@@ -83,11 +83,11 @@ def reset_plot():
     ax.set_xlabel("X [mm]")
     ax.set_ylabel("Y [mm]")
     ax.grid(True)
-    # Forbidden region box: from -40 to +65 in both x and y
+    # Forbidden region box
     forbidden_box = patches.Rectangle(
         (-40, -40),       # Bottom-left corner
-        80,              # Width: 65 - (-40)
-        80,              # Height: 65 - (-40)
+        80,              # Width: 
+        80,              # Height: 
         linewidth=1.5,
         edgecolor='red',
         facecolor='none',
@@ -115,6 +115,15 @@ def reset_plot():
     fig.canvas.flush_events()
     plt.pause(0.01)
     print("Plot reset to initial position (0,0)")
+
+def set_plot_limits(xmin, xmax, ymin, ymax):
+    """Update the forbidden zone to match the stage's full range."""
+    width = xmax - xmin
+    height = ymax - ymin
+    forbidden_box.set_xy((xmin, ymin))
+    forbidden_box.set_width(width)
+    forbidden_box.set_height(height)
+    ax.figure.canvas.draw()
 
 if __name__ == "__main__":
     reset_plot()

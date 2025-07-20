@@ -1,6 +1,6 @@
 import tkinter as tk
-from plot import update_dot,reset_plot, update_dot_rel
-from controller_dummy import move_to,move_home,rel_move_to, zero_to
+from plot import update_dot,reset_plot, update_dot_rel, set_plot_limits
+from controller_VP9000 import move_to,move_home,rel_move_to, zero_to, find_range
 import serial
 import connection
 
@@ -21,7 +21,7 @@ def on_submit():
 
     if SERIAL_PORT.lower() == 'dummy':
         connection.ser = 'Dummy'
-        zero_to(connection.ser)
+        print("Using dummy controller.\n Opeinng GUI...")
         serwindow.destroy()
     else:
         try:
@@ -34,6 +34,9 @@ def on_submit():
                 timeout=1
             )
             zero_to(connection.ser)
+            xmin, xmax, ymin, ymax =find_range(connection.ser)
+            set_plot_limits(xmin, xmax, ymin, ymax)
+            print(f"Connected to {SERIAL_PORT}. Opening GUI...")
             serwindow.destroy()
         except Exception as e:
             serlabel.config(text=f"Connection failed: {e}")
@@ -78,6 +81,18 @@ def on_click_home():
     update_dot(0, 0)    
     move_home(connection.ser)
 
+def on_click_findrange():
+    '''Find the range of the stage'''
+    xmin, xmax, ymin, ymax = find_range(connection.ser)
+    set_plot_limits(xmin, xmax, ymin, ymax)
+    label.config(text=f"Range: X({xmin},{xmax}) Y({ymin},{ymax})")
+
+def on_click_zero():
+    '''Zero the stage'''
+    zero_to(connection.ser)
+    reset_plot()
+    update_dot(0, 0)
+
 def check_input():
     """Validate and return x and y input as integers."""
     try:
@@ -99,7 +114,7 @@ def check_input():
 #creates the GUI window    
 root = tk.Tk()
 root.title("Linear Stage Control")
-root.geometry("250x150")
+root.geometry("250x200")
 
 # Label showing output
 label = tk.Label(root, text="Welcome")
@@ -128,5 +143,14 @@ home_button.place(x=25, y=100)
 # Relative motion 
 rel_motion = tk.Button(root, text="Relative Motion", command=on_click_relmove)
 rel_motion.place(x=125, y=100)
+
+# Find range button
+findrange_button = tk.Button(root, text="Find Range", command=on_click_findrange)
+findrange_button.place(x=50, y=150)
+
+# Zero button
+zero_button = tk.Button(root, text="Zero", command=on_click_zero)
+zero_button.place(x=150, y=150)
+
 # Start the GUI event loop
 root.mainloop()

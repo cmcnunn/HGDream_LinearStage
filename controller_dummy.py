@@ -13,3 +13,7 @@ def rel_move_to(ser, dx, dy):
 def zero_to(ser):
     print("Zeroing stage position")
     return
+
+def find_range(ser):
+    print("Finding range of motion")
+    return (0, 100, 0, 100)  # Dummy range values
