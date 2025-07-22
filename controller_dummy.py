@@ -16,4 +16,4 @@ def zero_to(ser):
 
 def find_range(ser):
     print("Finding range of motion")
-    return (0, 100, 0, 100)  # Dummy range values
+    return (-30, 30, -30, 30)  # Dummy range values

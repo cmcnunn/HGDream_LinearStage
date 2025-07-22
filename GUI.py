@@ -1,6 +1,6 @@
 import tkinter as tk
-from plot import update_dot,reset_plot, update_dot_rel, set_plot_limits
-from controller_VP9000 import move_to,move_home,rel_move_to, zero_to, find_range
+from plot import update_dot, update_dot_rel, set_plot_limits
+from controller_dummy import move_to,move_home,rel_move_to, zero_to, find_range
 import serial
 import connection
 

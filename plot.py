@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 fig, ax = plt.subplots()
-ax.set_xlim(-65, 65)
-ax.set_ylim(-65, 65)
+ax.set_xlim(-80, 80)
+ax.set_ylim(-80, 80)
 ax.set_title("Hodoscope Position")
 ax.set_xlabel("X [mm]")
 ax.set_ylabel("Y [mm]")
@@ -77,8 +77,8 @@ def reset_plot():
 
     # Clear the current axes
     ax.cla()
-    ax.set_xlim(-65, 65)
-    ax.set_ylim(-65, 65)
+    ax.set_xlim(-80, 80)
+    ax.set_ylim(-80, 80)
     ax.set_title("Hodoscope Position")
     ax.set_xlabel("X [mm]")
     ax.set_ylabel("Y [mm]")

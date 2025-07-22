@@ -8,6 +8,8 @@ def zero_to(ser):
         resp_x = send_command(ser, 'I1M-0', clear_first=True)  # Send motor 1 to negative limit
         resp_y = send_command(ser, 'I2M0', clear_first=True)  # Send motor 2 to positive limit
 
+        print('Moving to Limit')
+
         time.sleep(1)
 
         ser.write(b'N\r') #Erase Position
@@ -22,14 +24,10 @@ def zero_to(ser):
         print("Turned motors online")
         time.sleep(1)
 
-        print('Sent Limit commands to motors for zeroing')
 
         resp_x = send_command(ser, 'IA1M13016')  # Zero motor 1
         resp_y = send_command(ser, 'IA2M13016')  # Zero motor 2
 
-        time.sleep(1)
-
-        ser.write(b'R\r') #Run
         time.sleep(1)
 
         print(f"Zeroed motor 1: {resp_x}")
@@ -48,9 +46,10 @@ def zero_to(ser):
         time.sleep(1)
 
         ser.write(b'C\r') #Clear queued commands
+        print('Cleared Commands')
         time.sleep(1)
 
-        print("ZEROING COMPLETE...Stage should be at (0,0)...Opening GUI now")
+        print("ZEROING COMPLETE...Stage should be at (0,0)")
 
     except serial.SerialException as e:
         print(f"Serial error during zeroing: {e}")
@@ -70,7 +69,8 @@ def send_command(ser, cmd):
         full_cmd = cmd + '\r'
         ser.write(full_cmd.encode())
         time.sleep(0.05)
-        if cmd.startswith('I'):
+
+        if cmd.startswith('I'): #if indexing motor always R
             ser.write(b'R')
             time.sleep(0.05)
         
@@ -85,6 +85,7 @@ def send_command(ser, cmd):
 
         if b'^' not in response:
             print("Warning: Did not receive expected termination character '^'.")
+
         return response.decode(errors='ignore').strip()
     
     except serial.SerialException as e:
@@ -93,11 +94,18 @@ def send_command(ser, cmd):
     
 def convert_mm_to_steps(mm, steps_per_mm=400):
     """Convert millimeters to motor steps."""
-    return int(mm * steps_per_mm)
+    try: 
+        x = int(mm * steps_per_mm)
+        return x
+    except ValueError: 
+        print("Invalid input for convertmm_to_stpes: mm must be an integer")
 
 def convert_steps_to_mm(steps, steps_per_mm=400):
     """Convert motor steps to millimeters."""
-    return steps / steps_per_mm
+    try: 
+        return int(steps / steps_per_mm)
+    except ValueError: 
+        print(f"Invalid input for convert_steps_to_mm: steps must be an integer divisable by {steps_per_mm}")
 
 def move_to(ser, x_mm, y_mm):
     """Move stage to absolute position given in centimeters."""
@@ -132,7 +140,10 @@ def rel_move_to(ser, x_mm, y_mm):
         y_steps = convert_mm_to_steps(int(y_mm)) 
 
         cmd_x = f'I1M{x_steps}'  # Relative move motor 1 (X)
-        cmd_y = f'I2M{y_steps}'  # Relative move motor 2 (Y)
+        if y_steps >= 0: #flip y direction because motor is inverted
+            cmd_y = f'IA2M-{y_steps}'
+        else:
+            cmd_y = f'IA2M{abs(y_steps)}'
 
         resp_x = send_command(ser, cmd_x)
         time.sleep(1)  # Small delay between commands
@@ -153,7 +164,6 @@ def move_home(ser):
         resp_x = send_command(ser, 'IA1M0')  # Home motor 1 (X)
         time.sleep(1)  # Small delay between commands
         resp_y = send_command(ser, 'IA2M0')  # Home motor 2 (Y)
-        time.sleep(0.5)  # Optional wait after commands
 
         print(f"Sent: IA1M0, Response: {resp_x}")
         print(f"Sent: IA2M0, Response: {resp_y}")
@@ -166,17 +176,19 @@ def motor_stuck():
     '''Motor is stuck: Stop all motion and clear queue '''
     print("Motor appears to be stuck. Stopping all motion and clearing command queue.")
     try:
-        ser.write(b'XQ\r')  # Kill any current motion
+        ser.write(b'K\r')  # Kill any current motion
         time.sleep(0.5)
         ser.write(b'C\r')  # Clear queued commands
         time.sleep(2)
+        ser.write(b'IA1M-0\r') #Move Stage to Negative limit
+        zero_to(ser)
     except serial.SerialException as e:
         print(f"Serial error while handling stuck motor: {e}")
 
 def find_range(ser):
     print("Finding range...")
 
-    ser.write(b'XQ\r')  # Kill any current motion
+    ser.write(b'K\r')  # Kill any current motion
     time.sleep(0.5)
     send_command(ser, 'C')   # clear queue
 
@@ -190,18 +202,19 @@ def find_range(ser):
 
     send_command(ser, 'I2M-0', clear_first=True)  # home Y
     time.sleep(5)
-    yres_min = convert_steps_to_mm(get_position_y(ser))
+    yres_max = convert_steps_to_mm(get_position_y(ser))
 
     send_command(ser, 'I2M0', clear_first=True)   # move to positive Y
     time.sleep(5)
-    yres_max = convert_steps_to_mm(get_position_y(ser))
+    yres_min = convert_steps_to_mm(get_position_y(ser))
 
-    print(f"xres_min: {xres_min}, xres_max: {xres_max}")
-    print(f"yres_min: {yres_min}, yres_max: {yres_max}")
+    print(f"Range of X: {xres_min}, {xres_max}")
+    print(f"Range of Y: {-1 * yres_min}, {-1 * yres_max}")
 
     move_home(ser)  # Return to home position
 
     return xres_min, xres_max, yres_min, yres_max
+
 
 def get_position_x(ser):
     ser.write(b'X\r')

@@ -63,7 +63,7 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
 
         # Stop and clear queue before motion
         if clear_first or cmd.startswith('I'):
-            ser.write(b'XQ\r')  # Kill any current motion
+            ser.write(b'K\r')  # Kill any current motion
             time.sleep(0.05)
 
             ser.write(b'C\r')   # Clear queued commands
@@ -82,7 +82,7 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
 
         if wait_for_ready:
             response = b""
-            timeout = time.time() + 15  # 10 seconds timeout
+            timeout = time.time() + 15  # 15 seconds timeout
             while b'^' not in response and time.time() < timeout:
                 response += ser.read(1)
 
@@ -177,12 +177,10 @@ def move_home(ser):
     print(f"Sent: IA1M0, Response: {resp_x}")
     print(f"Sent: IA2M0, Response: {resp_y}")
 
-    # Wait enough time for homing to finish
-    time.sleep(5)
 
 def motor_stuck(ser):
     '''Motor is stuck: Stop all motion and clear queue'''
-    ser.write(b'XQ\r')  # Kill any current motion
+    ser.write(b'K\r')  # Kill any current motion
     time.sleep(0.05)
     ser.write(b'C\r')   # Clear queued commands
     time.sleep(2)
@@ -195,7 +193,7 @@ def motor_stuck(ser):
 def find_range(ser):
     print("Finding range...")
 
-    ser.write(b'XQ\r')  # Kill any current motion
+    ser.write(b'K\r')  # Kill any current motion
     time.sleep(0.5)
     send_command(ser, 'C')   # clear queue
 
@@ -209,14 +207,14 @@ def find_range(ser):
 
     send_command(ser, 'I2M-0', clear_first=True)  # home Y
     time.sleep(5)
-    yres_min = convert_steps_to_mm(get_position_y(ser))
+    yres_max = convert_steps_to_mm(get_position_y(ser))
 
     send_command(ser, 'I2M0', clear_first=True)   # move to positive Y
     time.sleep(5)
-    yres_max = convert_steps_to_mm(get_position_y(ser))
+    yres_min = convert_steps_to_mm(get_position_y(ser))
 
-    print(f"xres_min: {xres_min}, xres_max: {xres_max}")
-    print(f"yres_min: {yres_min}, yres_max: {yres_max}")
+    print(f"Range of X: {xres_min}, {xres_max}")
+    print(f"Range of Y: {-1 * yres_min}, {-1 * yres_max}")
 
     move_home(ser)  # Return to home position
 
@@ -238,14 +236,14 @@ def get_position_y(ser):
     time.sleep(0.05)
     response = ser.read_until(b'\r').decode().strip()
     try:
-        return int(response)
+        return int(response) * -1 # Invert Y direction
     except ValueError:
         print(f"Failed to parse Y position: {repr(response)}")
         return None
     
 def get_mid_position(xres_min, xres_max, yres_min, yres_max):
-    x_mid = (xres_min + xres_max) / 2
-    y_mid = (yres_min + yres_max) / 2
+    x_mid = int((xres_min + xres_max) / 2)
+    y_mid = int((yres_min + yres_max) / 2)
     return x_mid, y_mid
 
 def main():
