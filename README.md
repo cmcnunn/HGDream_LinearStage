@@ -23,7 +23,7 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-
+- [Linear Stage User Manual (PDF) ](doc/docs/User Manual.pdf)
 ### Launch the GUI
 
 ```bash
