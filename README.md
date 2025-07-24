@@ -74,4 +74,4 @@ This will disable the valid port connection requirment.
 Both controller files will print the sent command which you can compare with the VXM or VP9000 user manuals 
 
 - [Velmex VXM User Manual (PDF)](docs/vxm_user_manl.pdf)
-- [Velmex VP9000 User Manual (PDF)](doc/vp9002_usrman.pdf)
+- [Velmex VP9000 User Manual (PDF)](docs/vp9002_usrman.pdf)
