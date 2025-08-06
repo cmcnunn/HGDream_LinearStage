@@ -102,7 +102,7 @@ def send_command(ser, cmd, wait_for_ready=True, clear_first=False):
         print(f"Serial error: {e}")
         return None
 
-def convert_mm_to_steps(mm, steps_per_mm=400):
+def convert_mm_to_steps(mm, steps_per_mm=200):
     """Convert millimeters to motor steps."""
     try:
         int(mm * steps_per_mm)
@@ -111,7 +111,7 @@ def convert_mm_to_steps(mm, steps_per_mm=400):
         print("Invalid input for convert_mm_to_steps: mm must be a number.")
         return None
 
-def convert_steps_to_mm(steps, steps_per_mm=400):
+def convert_steps_to_mm(steps, steps_per_mm=200):
     """Convert motor steps to millimeters."""
     try:
         return steps / steps_per_mm

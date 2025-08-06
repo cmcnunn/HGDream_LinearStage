@@ -1,38 +1,128 @@
-import serial
+import serial 
 import time
-from connection import ser
+from connection import ser 
+from plot import set_plot_limits
 
-def zero_to(ser):
-    """Zero the stage position."""
+def convert_mm_to_steps(mm, steps_per_mm=200):
     try:
-        resp_x = send_command(ser, 'I1M-0', clear_first=True)  # Send motor 1 to negative limit
-        resp_y = send_command(ser, 'I2M0', clear_first=True)  # Send motor 2 to positive limit
+        x = round(mm * steps_per_mm)
+        return x
+    except TypeError:
+        print("\033[31mInvalid input for unit conversion.\033[0m")
 
-        print('Moving to Limit')
+def convert_steps_to_mm(steps, steps_per_mm=200):
+    try:
+        x = round(steps / steps_per_mm)
+        return x
+    except TypeError:
+        print("\033[31mInvalid input for unit conversion.\033[0m")
+
+def send_command(ser, cmd): 
+    '''Send a command to the serial poort and return the responce. '''
+    try: 
+        ser.write(b'F') #Turn the motor online 
+        time.sleep(1)
+        ser.write(b'C') #Clear command que
+        time.sleep(1)
+        ser.write(b'R')
+        ser.reset_input_buffer()
+
+        full_cmd = cmd + '\r' #write command
+        ser.write(full_cmd.encode()) #send command
+
+        if cmd.startswith('I'): #if indexing moror always R
+            ser.write(b'R') #runs indexing command 
+            time.sleep(1)
+    
+        response = b""
+        timeout = time.time() + 15 #15 seconds timeout
+        while b'^' not in response and time.time() < timeout: 
+            response += ser.read(1)
+
+        if time.time() > timeout: 
+            print("\033[31mWARNING: Command response timeout. Motor is stuck\033[0m")
+            motor_stuck()
+        
+    except serial.SerialException as e: 
+        print(f"\033[31mSerial error: {e}\033[0m")
+        return None
+
+def find_range(ser): 
+
+    try:
+        print("Finding range")
+
+        send_command(ser, 'K') #kill all motion 
+        time.sleep(1)
+
+        send_command(ser, 'I1M-0') #get x lower limit
+        time.sleep(1)
+        xres_min = convert_steps_to_mm(get_position_x(ser))
+
+        send_command(ser, "I2M0") #get y lower limit
+        time.sleep(1)
+        yres_min = convert_steps_to_mm(get_position_y(ser))
+
+        send_command(ser, "I1M0") #get x upper limit 
+        time.sleep(1)
+        xres_max = convert_steps_to_mm(get_position_x(ser))
+
+        send_command(ser, "I2M-0") #get y upper limit
+        time.sleep(1)
+        yres_max = convert_steps_to_mm(get_position_y(ser))
+
+
+        midpoint_int = lambda a, b: round((a + b) / 2)
+
+        x_mid = midpoint_int(xres_max, xres_min)
+        y_mid = midpoint_int(yres_max, yres_min)
+
+        xtot_d = xres_max - xres_min
+        ytot_d = yres_max - yres_min
+
+        x_max = xtot_d/2
+        x_min = -1*x_max
+
+        y_max = ytot_d/2
+        y_min = -1*y_max
+
+        print(f"Range X:{x_min}-{x_max} Y:{y_min},{y_max}")
+
+        print(f"Midpoints: X:{x_mid}, Y:{y_mid}")
+
+        return x_min, x_max, y_min, y_max, x_mid, y_mid
+    
+    except Exception as e: 
+        return print(f"\033[31mERROR in find_range: {e}\033[0m")
+
+
+def zero_to(ser, x_mid, y_mid):
+    print(f"Now Zeroing to ({x_mid,y_mid})")
+    try: 
+        resp_x = send_command(ser, 'I1M-0')
+        resp_y = send_command(ser, 'I2M0')
+
+        print("Moving to Limit")
 
         time.sleep(1)
 
-        ser.write(b'N\r') #Erase Position
-        print("Erased position")
+        ser.write(b'N\r')
+        print('Erased Position')
         time.sleep(1)
 
-        ser.write(b'Q\r') #Turn motor offline
+        ser.write(b'Q\r')
         print("Turned motors offline")
         time.sleep(1)
 
-        ser.write(b'F\r') #Turn motor online
-        print("Turned motors online")
+        ser.write(b'F\r')
+        print("Motor Online")
         time.sleep(1)
 
-
-        resp_x = send_command(ser, 'IA1M13016')  # Zero motor 1
-        resp_y = send_command(ser, 'IA2M13016')  # Zero motor 2
+        move_to(ser,x_mid,y_mid) #move to midpoints
 
         time.sleep(1)
 
-        print(f"Zeroed motor 1: {resp_x}")
-        print(f"Zeroed motor 2: {resp_y}")
-
+        print("Zeroed Motors")
         ser.write(b'N') #Erase Position
         print("Erased position")
         time.sleep(1)
@@ -51,61 +141,8 @@ def zero_to(ser):
 
         print("ZEROING COMPLETE...Stage should be at (0,0)")
 
-    except serial.SerialException as e:
-        print(f"Serial error during zeroing: {e}")
-
-    
-
-def send_command(ser, cmd): 
-    """Send a command to the serial port and return the response."""
-    try:
-        ser.write(b'F')  # Ensure online mode
-        time.sleep(0.05)
-        ser.write(b'C')   # Clear queued commands
-        time.sleep(0.05)
-        ser.write(b'R')
-        time.sleep(0.05)
-        ser.reset_input_buffer()
-        full_cmd = cmd + '\r'
-        ser.write(full_cmd.encode())
-        time.sleep(0.05)
-
-        if cmd.startswith('I'): #if indexing motor always R
-            ser.write(b'R')
-            time.sleep(0.05)
-        
-        response = b""
-        timeout = time.time() + 15 # 15 seconds timeout
-        while b'^' not in response and time.time() < timeout:
-            response += ser.read(1)
-        
-        if time.time() >= timeout:
-            print("Warning: Command response timeout. Assuming motor is stuck.")
-            motor_stuck()
-
-        if b'^' not in response:
-            print("Warning: Did not receive expected termination character '^'.")
-
-        return response.decode(errors='ignore').strip()
-    
-    except serial.SerialException as e:
-        print(f"Serial error: {e}")
-        return None
-    
-def convert_mm_to_steps(mm, steps_per_mm=400):
-    """Convert millimeters to motor steps."""
-    try: 
-        x = int(mm * steps_per_mm)
-        return x
-    except ValueError: 
-        print("Invalid input for convertmm_to_stpes: mm must be an integer")
-
-def convert_steps_to_mm(steps, steps_per_mm=400):
-    """Convert motor steps to millimeters."""
-    try: 
-        return int(steps / steps_per_mm)
-    except ValueError: 
-        print(f"Invalid input for convert_steps_to_mm: steps must be an integer divisable by {steps_per_mm}")
+    except serial.SerialException as e: 
+        print(f"\033[31mSeral error during zeroing: {e}\033[0m")
 
 def move_to(ser, x_mm, y_mm):
     """Move stage to absolute position given in centimeters."""
@@ -128,11 +165,11 @@ def move_to(ser, x_mm, y_mm):
         print(f"Sent: {cmd_y}, Response: {resp_y}")
     
     except ValueError: 
-        print("Invalid input for move_to: x_mm and y_mm must be integers.")
+        print("\033[31mInvalid input for move_to: x_mm and y_mm must be integers.\033[0m")
         
     except Exception as e:
-        print(f"Error in move_to: {e}")
-        
+        print(f"\033[31mError in move_to: {e}\033[0m")
+
 def rel_move_to(ser, x_mm, y_mm):
     """Move stage relative to current position given in centimeters."""
     try:
@@ -154,9 +191,9 @@ def rel_move_to(ser, x_mm, y_mm):
         print(f"Sent: {cmd_y}, Response: {resp_y}")
     
     except ValueError:
-        print("Invalid input for rel_move_to: x_mm and y_mm must be integers.")
+        print("\033[31mInvalid input for rel_move_to: x_mm and y_mm must be integers.\033[0m")
     except Exception as e:
-        print(f"Error in rel_move_to: {e}")
+        print(f"\033[31mError in rel_move_to: {e}\033[0m")
 
 def move_home(ser):
     """Home the stage."""
@@ -169,51 +206,42 @@ def move_home(ser):
         print(f"Sent: IA2M0, Response: {resp_y}")
 
     except Exception as e:
-        print(f"Error in move_home: {e}")
+        print(f"\033[31mError in move_home: {e}\033[0m")
         return None, None
     
-def motor_stuck():
+
+import concurrent.futures
+
+def motor_stuck(ser):
     '''Motor is stuck: Stop all motion and clear queue '''
-    print("Motor appears to be stuck. Stopping all motion and clearing command queue.")
+    print("\033[32mMotor appears to be stuck. Stopping all motion and clearing command queue.\033[0m")
     try:
-        ser.write(b'K\r')  # Kill any current motion
+        ser.write(b'K\r')  # Kill motion
         time.sleep(0.5)
-        ser.write(b'C\r')  # Clear queued commands
+        ser.write(b'C\r')  # Clear queue
         time.sleep(2)
-        ser.write(b'IA1M-0\r') #Move Stage to Negative limit
-        zero_to(ser)
-    except serial.SerialException as e:
-        print(f"Serial error while handling stuck motor: {e}")
+        ser.write(b'IA1M-0\r')  # Move to negative limit
+        print("\033[31mResetting...\033[0m")
 
-def find_range(ser):
-    print("Finding range...")
+        def reset_and_find():
+            xmin, xmax, ymin, ymax, midx, midy = find_range(ser)
+            zero_to(ser, midx, midy)
+            set_plot_limits(xmin, xmax, ymin, ymax)
 
-    ser.write(b'K\r')  # Kill any current motion
-    time.sleep(0.5)
-    send_command(ser, 'C')   # clear queue
+        # Run with timeout
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(reset_and_find)
+            try:
+                future.result(timeout=30)  # seconds
+            except concurrent.futures.TimeoutError:
+                print("\033[31mCannot Reset. Please Close Window\033[0m")
+                
+                return
 
-    send_command(ser, 'I1M-0', clear_first=True)  # home X
-    time.sleep(5)
-    xres_min = convert_steps_to_mm(get_position_x(ser))
+        return
 
-    send_command(ser, 'I1M0', clear_first=True)   # move to positive X
-    time.sleep(5)
-    xres_max = convert_steps_to_mm(get_position_x(ser))
-
-    send_command(ser, 'I2M-0', clear_first=True)  # home Y
-    time.sleep(5)
-    yres_max = convert_steps_to_mm(get_position_y(ser))
-
-    send_command(ser, 'I2M0', clear_first=True)   # move to positive Y
-    time.sleep(5)
-    yres_min = convert_steps_to_mm(get_position_y(ser))
-
-    print(f"Range of X: {xres_min}, {xres_max}")
-    print(f"Range of Y: {-1 * yres_min}, {-1 * yres_max}")
-
-    move_home(ser)  # Return to home position
-
-    return xres_min, xres_max, yres_min, yres_max
+    except Exception as e:
+        print(f"\033[31mUnexpected error: {e}\033[0m")
 
 
 def get_position_x(ser):
@@ -221,9 +249,11 @@ def get_position_x(ser):
     time.sleep(0.05)
     response = ser.read_until(b'\r').decode().strip()
     try:
+        if response.startswith('^'):
+            response = response[1:]  # Remove leading '^'
         return int(response)
     except ValueError:
-        print(f"Failed to parse X position: {repr(response)}")
+        print(f"\033[31mFailed to parse X position: {repr(response)}\033[0m")
         return None
 
 def get_position_y(ser):
@@ -231,20 +261,9 @@ def get_position_y(ser):
     time.sleep(0.05)
     response = ser.read_until(b'\r').decode().strip()
     try:
+        if response.startswith('^'):
+            response = response[1:]  # Remove leading '^'
         return int(response)
     except ValueError:
-        print(f"Failed to parse Y position: {repr(response)}")
+        print(f"\033[31mFailed to parse Y position: {repr(response)}\033[0m")
         return None
-    
-if __name__ == "__main__":
-    # Example usage
-    if ser is None:
-        print("Serial port not connected.")
-    else:
-        print("Homing stage...")
-        move_home(ser)
-        print("Moving to (2, 3)...")
-        move_to(ser, 2, 3)
-        print("Moving relative by (-1, -1)...")
-        rel_move_to(ser, -1, -1)
-        print("Done.")

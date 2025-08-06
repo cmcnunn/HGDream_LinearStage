@@ -2,57 +2,8 @@ import tkinter as tk
 from plot import update_dot, update_dot_rel, set_plot_limits
 from controller_dummy import move_to,move_home,rel_move_to, zero_to, find_range
 import serial
+import time 
 import connection
-
-# Create a separate window to get serial port input
-# This window will block until the user provides input
-serwindow = tk.Tk()
-serwindow.title("Serial Port Input")
-serwindow.geometry("400x200")
-serlabel = tk.Label(serwindow, text="Enter Serial Port (e.g. COM6):")
-serlabel.pack(pady=5)
-serentry = tk.Entry(serwindow, width=5)
-serentry.place(x=180, y=50)
-
-def on_submit():
-    '''Submit the serial port and close the window'''
-    import connection
-    SERIAL_PORT = serentry.get().strip()
-
-    if SERIAL_PORT.lower() == 'dummy':
-        connection.ser = 'Dummy'
-        print("Using dummy controller.\n Opeinng GUI...")
-        serwindow.destroy()
-    else:
-        try:
-            connection.ser = serial.Serial(
-                port=SERIAL_PORT,
-                baudrate=9600,
-                bytesize=serial.SEVENBITS,
-                parity=serial.PARITY_EVEN,
-                stopbits=serial.STOPBITS_TWO,
-                timeout=1
-            )
-            
-            zero_to(connection.ser)
-            xmin, xmax, ymin, ymax =find_range(connection.ser)
-            set_plot_limits(xmin, xmax, ymin, ymax)
-            print(f"Connected to {SERIAL_PORT}. Opening GUI...")
-            serwindow.destroy()
-        except Exception as e:
-            serlabel.config(text=f"Connection failed: {e}")
-
-submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
-submit_button.place(x=170, y=80)
-serwindow.mainloop()
-
-if connection.ser is None:
-    print("No serial port provided. Exiting.")
-    exit()
-
-if connection.ser == 'Dummy':
-    print("Using dummy controller. No actual movements will be made.")
-
 
 def show_move():
     '''Show the move command'''
@@ -83,13 +34,15 @@ def on_click_home():
 
 def on_click_findrange():
     '''Find the range of the stage'''
-    xmin, xmax, ymin, ymax = find_range(connection.ser)
+    xmin, xmax, ymin, ymax, xmid, ymid = find_range(connection.ser)
     set_plot_limits(xmin, xmax, ymin, ymax)
-    label.config(text=f"Range: X({xmin},{xmax}) Y({ymin},{ymax})")
-
+    label.config(text=f"X({xmin},{xmax})Y({ymin},{ymax})Mid:({xmid},{ymid})")
+    zero_to(connection.ser,xmid,ymid)
+    return xmin, xmax, ymin, ymax, xmid, ymid
 def on_click_zero():
     '''Zero the stage'''
-    zero_to(connection.ser)
+    global xmid, ymid 
+    zero_to(connection.ser,xmid,ymid)
     update_dot(0, 0)
 
 def check_input():
@@ -109,6 +62,60 @@ def check_input():
         y_input.insert(0, "0")
 
     return x, y
+
+def on_submit():
+    '''Submit the serial port and close the window'''
+    import connection
+    SERIAL_PORT = serentry.get().strip()
+
+    if SERIAL_PORT.lower() == 'dummy':
+        connection.ser = 'Dummy'
+        xmin, xmax, ymin, ymax, xmid, ymid = find_range(connection.ser)
+        set_plot_limits(xmin, xmax, ymin, ymax)
+        zero_to(connection.ser,xmid,ymid)
+        print("\033[31mUsing dummy controller.\nOpeinng GUI...\033[0m")
+        serwindow.destroy()
+        return xmid, ymid 
+    else:
+        try:
+            connection.ser = serial.Serial(
+                port=SERIAL_PORT,
+                baudrate=9600,
+                bytesize=serial.SEVENBITS,
+                parity=serial.PARITY_EVEN,
+                stopbits=serial.STOPBITS_TWO,
+                timeout=1
+            )
+            
+            xmin, xmax, ymin, ymax, xmid, ymid =find_range(connection.ser)
+            zero_to(connection.ser,xmid,ymid)
+            set_plot_limits(xmin, xmax, ymin, ymax)
+            print(f"Connected to {SERIAL_PORT}. Opening GUI...")
+            serwindow.destroy()
+            return xmid, ymid
+        except Exception as e:
+            serlabel.config(text=f"Connection failed: {e}")
+# Create a separate window to get serial port input
+# This window will block until the user provides input
+serwindow = tk.Tk()
+serwindow.title("Serial Port Input")
+serwindow.geometry("400x200")
+serlabel = tk.Label(serwindow, text="Enter Serial Port (e.g. COM6):")
+serlabel.pack(pady=5)
+serentry = tk.Entry(serwindow, width=5)
+serentry.place(x=180, y=50)
+
+submit_button = tk.Button(serwindow, text="Submit", command=on_submit)
+submit_button.place(x=170, y=80)
+serwindow.mainloop()
+
+if connection.ser is None:
+    print("No serial port provided. Exiting.")
+    exit()
+
+if connection.ser == 'Dummy':
+    print("Using dummy controller. No actual movements will be made.")
+
 
 #creates the GUI window    
 root = tk.Tk()

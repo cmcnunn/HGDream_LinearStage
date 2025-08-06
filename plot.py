@@ -68,7 +68,7 @@ def update_dot_rel(dx, dy):
     global prev_x, prev_y
     new_x = prev_x + dx
     new_y = prev_y + dy
-    return update_dot(new_x, new_y)
+    update_dot(new_x, new_y)
 
 def reset_plot():
     global prev_x, prev_y, dot, black_dots, box, ax
@@ -120,17 +120,7 @@ def set_plot_limits(xmin, xmax, ymin, ymax):
     """Update the forbidden zone to match the stage's full range."""
     width = xmax - xmin
     height = ymax - ymin
-    forbidden_box.set_xy((xmin, ymin))
+    forbidden_box.set_xy((-1*(width/2), -1*(height/2)))
     forbidden_box.set_width(width)
     forbidden_box.set_height(height)
     ax.figure.canvas.draw()
-
-if __name__ == "__main__":
-    reset_plot()
-    update_dot(5, 5)
-    update_dot(10, 10)
-    update_dot(15, 15)
-    update_dot(18, 18)
-    update_dot(19, 19)
-    plt.ioff()
-    plt.show()
