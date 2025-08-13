@@ -15,11 +15,13 @@ A Python-based control interface for a 2-axis Velmex linear stage system which h
 - Python 3.7+
 - `pyserial`
 - `matplotlib`
-- `tkinter` (standard with most Python distributions)
+- `numpy`
+- `PyQt5` (for QtAgg backend; ensures GUI updates properly alongside Matplotlib plot)
+- `tkinter` (included with most Python distributions)
 
 Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt 
 ```
 
 ## Usage

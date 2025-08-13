@@ -2,7 +2,6 @@ import tkinter as tk
 from plot import update_dot, update_dot_rel, set_plot_limits
 from controller_dummy import move_to,move_home,rel_move_to, zero_to, find_range
 import serial
-import time 
 import connection
 
 def show_move():
@@ -39,6 +38,7 @@ def on_click_findrange():
     label.config(text=f"X({xmin},{xmax})Y({ymin},{ymax})Mid:({xmid},{ymid})")
     zero_to(connection.ser,xmid,ymid)
     return xmin, xmax, ymin, ymax, xmid, ymid
+
 def on_click_zero():
     '''Zero the stage'''
     global xmid, ymid 
